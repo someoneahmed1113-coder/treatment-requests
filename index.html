@@ -97,12 +97,6 @@ th{background:#f6f9fb}
     <input id="loginPass" type="password" autocomplete="current-password">
     <button id="loginButton" type="button" class="primary" style="width:100%;margin-top:14px" onclick="login()">دخول | Sign in</button>
     <div id="loginMsg" class="demo hidden"></div>
-    <div class="demo">
-      <b>حسابات تجريبية:</b><br><span style="color:#1e73a8">على الجوال افتح الملف في Safari أو Chrome مباشرة، وليس داخل معاينة تطبيق الملفات.</span><br><br>
-      coordination / 1234 — التنسيق الطبي<br>
-      cardio / 1234 — قائد مسار القلب<br>
-      ortho / 1234 — قائد مسار العظام
-    </div>
   </div>
 </div>
 
@@ -268,21 +262,12 @@ function seed(){
       {name:"الجراحة",leaderUserId:null},{name:"العيون",leaderUserId:null},{name:"الأعصاب",leaderUserId:null}
     ]);
   }
-  if(!localStorage.trp_demo_seed_v10){
-    const now = Date.now();
-    const H = 3600000, D = 24*H;
-    localStorage.trp_requests = JSON.stringify([
-      {id:"TR-2026-000101",patientId:"1000000101",patientName:"محمد أحمد",pathway:"القلب",leaderUserId:2,createdAt:now-2*H,status:"pending",notes:"طلب تجريبي اليوم - بانتظار الإفادة",attachments:["cardiology-report.pdf"],audit:[["إنشاء الطلب",now-2*H,"موظف التنسيق الطبي"]]},
-      {id:"TR-2026-000102",patientId:"1000000102",patientName:"سالم علي",pathway:"العظام",leaderUserId:3,createdAt:now-5*H,status:"available",responseAt:now-3*H,notes:"طلب تجريبي اليوم",responseNotes:"الخدمة متوفرة في برج الشمال الطبي - العيادات التخصصية",attachments:["ortho-report.pdf"],audit:[["إنشاء الطلب",now-5*H,"موظف التنسيق الطبي"],["إفادة: متوفر",now-3*H,"د. قائد مسار العظام"]]},
-      {id:"TR-2026-000103",patientId:"1000000103",patientName:"خالد عبدالله",pathway:"القلب",leaderUserId:2,createdAt:now-8*H,status:"unavailable",responseAt:now-6*H,notes:"حالة تجريبية لعدم التوفر",unavailableReason:"الخدمة غير متوفرة",responseNotes:"يوصى بالإحالة إلى مركز متخصص",attachments:["medical-report-103.pdf"],audit:[["إنشاء الطلب",now-8*H,"موظف التنسيق الطبي"],["إفادة: غير متوفر",now-6*H,"د. قائد مسار القلب"]]},
-      {id:"TR-2026-000104",patientId:"1000000104",patientName:"نورة صالح",pathway:"القلب",leaderUserId:2,createdAt:now-27*H,status:"pending",notes:"طلب من يوم أمس لاختبار بقائه عند قائد المسار",attachments:["report-104.pdf"],audit:[["إنشاء الطلب",now-27*H,"موظف التنسيق الطبي"]]},
-      {id:"TR-2026-000105",patientId:"1000000105",patientName:"فهد محمد",pathway:"العظام",leaderUserId:3,createdAt:now-52*H,status:"pending",notes:"طلب متأخر أكثر من 48 ساعة",attachments:["report-105.pdf"],audit:[["إنشاء الطلب",now-52*H,"موظف التنسيق الطبي"]]},
-      {id:"TR-2026-000106",patientId:"1000000106",patientName:"ريم عبدالله",pathway:"القلب",leaderUserId:2,createdAt:now-2*D-4*H,status:"available",responseAt:now-2*D-1*H,notes:"طلب مكتمل قبل يومين",responseNotes:"متوفر في مستشفى عرعر المركزي - قسم القلب",attachments:["report-106.pdf"],audit:[["إنشاء الطلب",now-2*D-4*H,"موظف التنسيق الطبي"],["إفادة: متوفر",now-2*D-1*H,"د. قائد مسار القلب"]]},
-      {id:"TR-2026-000107",patientId:"1000000107",patientName:"عبدالعزيز سعد",pathway:"العظام",leaderUserId:3,createdAt:now-3*D,status:"cancelled",cancelledAt:now-3*D+2*H,cancelReason:"تم إنشاء الطلب بالخطأ - بيانات تجريبية",notes:"اختبار حالة الإلغاء",attachments:[],audit:[["إنشاء الطلب",now-3*D,"موظف التنسيق الطبي"],["إلغاء الطلب",now-3*D+2*H,"موظف التنسيق الطبي"]]},
-      {id:"TR-2026-000108",patientId:"1000000108",patientName:"تركي منصور",pathway:"القلب",leaderUserId:2,createdAt:now-5*D,status:"unavailable",responseAt:now-4*D-20*H,notes:"طلب قديم لاختبار فلتر التاريخ",unavailableReason:"عدم توفر التخصص/الكوادر",responseNotes:"لا يتوفر مقدم الخدمة حاليًا",attachments:["report-108.pdf"],audit:[["إنشاء الطلب",now-5*D,"موظف التنسيق الطبي"],["إفادة: غير متوفر",now-4*D-20*H,"د. قائد مسار القلب"]]},
-      {id:"TR-2026-000109",patientId:"1000000109",patientName:"هند إبراهيم",pathway:"العظام",leaderUserId:3,createdAt:now-7*D,status:"available",responseAt:now-7*D+5*H,notes:"طلب قبل أسبوع",responseNotes:"متوفر في مستشفى النساء والولادة والأطفال - حسب التنسيق",attachments:["report-109.pdf"],audit:[["إنشاء الطلب",now-7*D,"موظف التنسيق الطبي"],["إفادة: متوفر",now-7*D+5*H,"د. قائد مسار العظام"]]}
-    ]);
-    localStorage.trp_demo_seed_v10 = "1";
+  // Clean release: no default/demo patient requests.
+  // Run once on devices that previously opened the demo version so old fake data disappears.
+  if(!localStorage.trp_clean_release_v1){
+    localStorage.trp_requests = JSON.stringify([]);
+    localStorage.removeItem("trp_demo_seed_v10");
+    localStorage.trp_clean_release_v1 = "1";
   }
 }
 seed();
