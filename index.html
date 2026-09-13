@@ -453,6 +453,22 @@ async function createRequest(){
     catch(e){ alert("تعذر حفظ الملف: "+file.name); return; }
   }
   const r={id:requestId,patientId:patientId.value.trim(),patientName:patientName.value.trim(),pathway:pathway.value,leaderUserId:p.leaderUserId,createdAt:Date.now(),status:"pending",notes:notes.value.trim(),attachments:savedFiles,audit:[["إنشاء الطلب",Date.now(),currentUser().name]]};
+ const { error: supabaseError } = await supabaseClient
+  .from('treatment_requests')
+  .insert([{
+    request_number: requestId,
+    patient_id: patientId.value.trim(),
+    patient_name: patientName.value.trim(),
+    pathway: pathway.value,
+    status: 'pending',
+    notes: notes.value.trim() || null
+  }]);
+
+if (supabaseError) {
+  console.error(supabaseError);
+  alert("تعذر حفظ الطلب في التخزين المركزي");
+  return;
+} 
   const rs=requests();rs.push(r);saveRequests(rs);alert("تم إرسال الطلب لقائد المسار.");showPage("dashboard");
 }
 function renderLeader(){
