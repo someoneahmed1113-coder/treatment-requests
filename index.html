@@ -338,7 +338,7 @@ function showPage(id){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
   if(id==="dashboard") renderDashboard();
   if(id==="new") prepareNew();
-  if(id==="leader") renderLeader();
+  if(id==="leader") loadLeaderRequestsFromSupabase();
   if(id==="reports") renderReports();
   if(id==="users") renderUsers();
   scrollTo(0,0);
@@ -471,7 +471,44 @@ if (supabaseError) {
 } 
   const rs=requests();rs.push(r);saveRequests(rs);alert("تم إرسال الطلب لقائد المسار.");showPage("dashboard");
 }
-function renderLeader(){
+async function loadLeaderRequestsFromSupabase(){
+  const u=currentUser();
+  if(!u || u.role!=="leader") return;
+
+  const {data,error}=await supabaseClient
+    .from('treatment_requests')
+    .select('*')
+    .eq('pathway',u.pathway)
+    .eq('status','pending')
+    .order('created_at',{ascending:true});
+
+  if(error){
+    console.error(error);
+    alert("تعذر جلب الطلبات من التخزين المركزي");
+    return;
+  }
+
+  const local=requests();
+  (data||[]).forEach(x=>{
+    if(!local.some(r=>r.id===x.request_number)){
+      local.push({
+        id:x.request_number,
+        patientId:x.patient_id,
+        patientName:x.patient_name,
+        pathway:x.pathway,
+        leaderUserId:u.id,
+        createdAt:new Date(x.created_at).getTime(),
+        status:x.status,
+        notes:x.notes||"",
+        attachments:[]
+      });
+    }
+  });
+
+  saveRequests(local);
+  renderLeader();
+}
+  function renderLeader(){
   const u=currentUser(), rs=scopedRequests().filter(r=>r.status==="pending").sort((a,b)=>a.createdAt-b.createdAt);
   if(!rs.length){leaderRequests.innerHTML=`<div class="card">لا توجد طلبات بانتظار الإفادة.<span class="en">No pending requests.</span></div>`;return}
   leaderRequests.innerHTML=rs.map(r=>{
