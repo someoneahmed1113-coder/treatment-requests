@@ -686,8 +686,21 @@ function openAttachDB(){
   });
 }
 async function saveAttachment(file, requestId){
-  const safeName=file.name.replace(/[^\w.\-()\u0600-\u06FF]+/g,"_");
-  const path=`${requestId}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
+  // Supabase Storage object paths should use a simple ASCII-safe name.
+  // Keep the user's original (including Arabic) filename only as display metadata.
+  const mimeExt={
+    "application/pdf":"pdf",
+    "image/jpeg":"jpg",
+    "image/jpg":"jpg",
+    "image/png":"png",
+    "image/webp":"webp",
+    "image/gif":"gif"
+  };
+  const originalExt=(file.name.split(".").pop()||"").toLowerCase();
+  const ext=/^[a-z0-9]{1,10}$/.test(originalExt) ? originalExt : (mimeExt[file.type]||"bin");
+  const safeRequestId=String(requestId||"request").replace(/[^A-Za-z0-9_-]/g,"_");
+  const uniqueName=`${Date.now()}_${Math.random().toString(36).slice(2,12)}.${ext}`;
+  const path=`${safeRequestId}/${uniqueName}`;
   const {error}=await supabaseClient.storage.from("treatment-attachments").upload(
     path,file,{contentType:file.type||"application/octet-stream",upsert:false}
   );
