@@ -87,6 +87,7 @@ th{background:#f6f9fb}
 
 /* Executive Reports */
 .report-filter-card{margin-bottom:12px}.report-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.report-title h2{margin:0;color:#0b3650}.report-filters{display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:10px;align-items:end}.report-filters label{display:block;margin-bottom:5px}.quick-periods{display:flex;gap:6px;flex-wrap:wrap}.report-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.report-kpis .card{min-height:92px}.report-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.metric-value{font-size:25px;font-weight:800;color:#123f59;margin-top:8px}.metric-sub{font-size:11px;color:#6b7f8c;margin-top:4px}.perf-table{width:100%;border-collapse:collapse;font-size:12px}.perf-table th,.perf-table td{padding:9px 6px;border-bottom:1px solid #e6edf2;text-align:center;white-space:nowrap}.perf-table th{background:#f6f9fb;color:#31556b}.perf-table tr:hover td{background:#f9fcfd}.bar-row{display:grid;grid-template-columns:120px 1fr 58px;gap:8px;align-items:center;margin:11px 0;font-size:12px}.bar-track{height:10px;background:#edf2f5;border-radius:20px;overflow:hidden}.bar-fill{height:100%;background:#1d6b93;border-radius:20px}.bar-fill.warn{background:#c78b28}.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.aging-box{padding:14px 8px;border:1px solid #e1e9ee;border-radius:12px;text-align:center}.aging-box b{display:block;font-size:24px;margin-top:6px}.reason-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf1f4}.reason-row:last-child{border:0}.report-empty{padding:22px;text-align:center;color:#7a8d99}.table-wrap{overflow:auto}.report-details-table{min-width:850px;width:100%;border-collapse:collapse;font-size:12px}.report-details-table th,.report-details-table td{padding:9px;border-bottom:1px solid #e6edf2;text-align:right}.report-details-table th{background:#f6f9fb}.sla-good{color:#23845d;font-weight:700}.sla-bad{color:#c94a4a;font-weight:700}@media(max-width:900px){.report-filters{grid-template-columns:1fr 1fr}.report-kpis{grid-template-columns:1fr 1fr}.report-two{grid-template-columns:1fr}.aging-grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.report-filters{grid-template-columns:1fr}.report-kpis{grid-template-columns:1fr 1fr}.bar-row{grid-template-columns:90px 1fr 48px}}
+.pathway-filter-wrap{min-width:360px}.pathway-chips{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0}.pathway-chip{width:auto!important;padding:9px 13px;border:1px solid #cfdde6;border-radius:10px;background:#fff;color:#173e55;cursor:pointer;font-weight:700}.pathway-chip:hover{background:#f2f7fa}.pathway-chip.active{background:#123f59;color:#fff;border-color:#123f59}@media(max-width:900px){.pathway-filter-wrap{min-width:0}.pathway-chips{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -180,14 +181,14 @@ th{background:#f6f9fb}
       <div class="report-filters">
         <div><label>من تاريخ <span class="en">From</span></label><input id="reportFrom" type="date" onchange="renderReports()"></div>
         <div><label>إلى تاريخ <span class="en">To</span></label><input id="reportTo" type="date" onchange="renderReports()"></div>
-        <div><label>المسار <span class="en">Pathway</span></label><select id="reportPathway" onchange="renderReports()">
-<option value="all">جميع المسارات | All Pathways</option>
-<option value="القلب">القلب | Cardiology</option>
-<option value="العيون">العيون | Ophthalmology</option>
-<option value="العظام">العظام | Orthopedics</option>
-<option value="الباطنة">الباطنة | Internal Medicine</option>
-<option value="المناظير">المناظير | Endoscopy</option>
-</select></div>
+        <div class="pathway-filter-wrap"><label>المسار <span class="en">Pathway</span></label><div id="reportPathwayChips" class="pathway-chips">
+<button type="button" class="pathway-chip active" data-pathway="all" onclick="selectReportPathway('all',this)">جميع المسارات</button>
+<button type="button" class="pathway-chip" data-pathway="القلب" onclick="selectReportPathway('القلب',this)">القلب</button>
+<button type="button" class="pathway-chip" data-pathway="العيون" onclick="selectReportPathway('العيون',this)">العيون</button>
+<button type="button" class="pathway-chip" data-pathway="العظام" onclick="selectReportPathway('العظام',this)">العظام</button>
+<button type="button" class="pathway-chip" data-pathway="الباطنة" onclick="selectReportPathway('الباطنة',this)">الباطنة</button>
+<button type="button" class="pathway-chip" data-pathway="المناظير" onclick="selectReportPathway('المناظير',this)">المناظير</button>
+</div></div>
         <div class="quick-periods"><button class="smallbtn" onclick="setReportPeriod(0)">اليوم</button><button class="smallbtn" onclick="setReportPeriod(7)">7 أيام</button><button class="smallbtn" onclick="setReportPeriod(30)">30 يوم</button><button class="smallbtn" onclick="clearReportPeriod()">الكل</button></div>
       </div>
     </div>
@@ -642,9 +643,15 @@ function saveReassign(id){
   const p=pathways().find(x=>x.name===np);if(!p?.leaderUserId){alert("لا يوجد قائد معيّن لهذا المسار.");return}
   const rs=requests(),r=rs.find(x=>x.id===id),old=r.pathway;r.pathway=np;r.leaderUserId=p.leaderUserId;r.createdAt=Date.now();r.audit.push([`إعادة توجيه من ${old} إلى ${np}: ${why}`,Date.now(),currentUser().name]);saveRequests(rs);closeModal();renderDashboard();
 }
+window.reportSelectedPathway="all";
+function selectReportPathway(pathway,btn){
+  window.reportSelectedPathway=pathway||"all";
+  document.querySelectorAll("#reportPathwayChips .pathway-chip").forEach(b=>b.classList.toggle("active",b.dataset.pathway===window.reportSelectedPathway));
+  renderReports();
+}
 function reportFilteredRequests(){
   let rs=scopedRequests();
-  const from=document.getElementById("reportFrom")?.value||"", to=document.getElementById("reportTo")?.value||"", pw=document.getElementById("reportPathway")?.value||"all";
+  const from=document.getElementById("reportFrom")?.value||"", to=document.getElementById("reportTo")?.value||"", pw=window.reportSelectedPathway||"all";
   if(from){const x=new Date(from+"T00:00:00").getTime();rs=rs.filter(r=>r.createdAt>=x)}
   if(to){const x=new Date(to+"T23:59:59.999").getTime();rs=rs.filter(r=>r.createdAt<=x)}
   if(pw!=="all")rs=rs.filter(r=>r.pathway===pw);
@@ -655,19 +662,14 @@ function setReportPeriod(days){
   $("reportFrom").value=localDateInputValue(f); $("reportTo").value=localDateInputValue(t); renderReports();
 }
 function clearReportPeriod(){$("reportFrom").value="";$("reportTo").value="";renderReports()}
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+}
 function median(nums){if(!nums.length)return 0;const a=[...nums].sort((x,y)=>x-y),m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2}
 function metricCard(ar,en,val,sub=""){return `<div class="card"><small>${ar}<span class="en">${en}</span></small><div class="metric-value">${val}</div>${sub?`<div class="metric-sub">${sub}</div>`:""}</div>`}
 function renderReports(){
-  const sel=$("reportPathway");
-  if(sel){
-    const old=sel.value||"all";
-    const fixedReportPathways=["القلب","العيون","العظام","الباطنة","المناظير"];
-    const dataPathways=[...new Set(requests().map(r=>r.pathway).filter(Boolean))];
-    const names=[...new Set([...fixedReportPathways,...dataPathways])];
-    const opts=["<option value='all'>جميع المسارات | All Pathways</option>",...names.map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)];
-    sel.innerHTML=opts.join("");
-    sel.value=[...sel.options].some(o=>o.value===old)?old:"all";
-  }
+  if(!window.reportSelectedPathway) window.reportSelectedPathway="all";
+  document.querySelectorAll("#reportPathwayChips .pathway-chip").forEach(b=>b.classList.toggle("active",b.dataset.pathway===window.reportSelectedPathway));
   const rs=reportFilteredRequests(), now=Date.now();
   const responded=rs.filter(r=>["available","unavailable"].includes(r.status)&&r.responseAt);
   const responseHours=responded.map(r=>(r.responseAt-r.createdAt)/3600000).filter(x=>x>=0);
