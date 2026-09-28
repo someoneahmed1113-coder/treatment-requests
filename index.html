@@ -652,7 +652,15 @@ function median(nums){if(!nums.length)return 0;const a=[...nums].sort((x,y)=>x-y
 function metricCard(ar,en,val,sub=""){return `<div class="card"><small>${ar}<span class="en">${en}</span></small><div class="metric-value">${val}</div>${sub?`<div class="metric-sub">${sub}</div>`:""}</div>`}
 function renderReports(){
   const sel=$("reportPathway");
-  if(sel){const old=sel.value||"all";const opts=["<option value='all'>جميع المسارات | All Pathways</option>",...pathways().map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`)];sel.innerHTML=opts.join("");if([...sel.options].some(o=>o.value===old))sel.value=old;}
+  if(sel){
+    const old=sel.value||"all";
+    const fixedReportPathways=["القلب","العيون","العظام","الباطنة","المناظير"];
+    const dataPathways=[...new Set(requests().map(r=>r.pathway).filter(Boolean))];
+    const names=[...new Set([...fixedReportPathways,...dataPathways])];
+    const opts=["<option value='all'>جميع المسارات | All Pathways</option>",...names.map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)];
+    sel.innerHTML=opts.join("");
+    sel.value=[...sel.options].some(o=>o.value===old)?old:"all";
+  }
   const rs=reportFilteredRequests(), now=Date.now();
   const responded=rs.filter(r=>["available","unavailable"].includes(r.status)&&r.responseAt);
   const responseHours=responded.map(r=>(r.responseAt-r.createdAt)/3600000).filter(x=>x>=0);
