@@ -413,7 +413,7 @@ function showPage(id){
   if(id==="dashboard") renderDashboard();
   if(id==="new") prepareNew();
   if(id==="leader") loadLeaderRequestsFromSupabase();
-  if(id==="reports") renderReports();
+  if(id==="reports"){ renderReports(); syncRequestsFromSupabase(true).then(()=>renderReports()).catch(err=>{console.error("Reports sync error:",err); renderReports();}); }
   if(id==="users") renderUsers();
   scrollTo(0,0);
 }
