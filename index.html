@@ -84,6 +84,9 @@ th{background:#f6f9fb}
 
 .date-filter-bar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:10px 0 14px}.date-filter-bar .date-field{min-width:150px;flex:1}.date-filter-bar label{display:block;font-size:12px;font-weight:bold;margin-bottom:5px}.date-filter-toggle{white-space:nowrap}.date-filter-panel{display:none;width:100%;gap:8px;align-items:end;flex-wrap:wrap;padding:10px;background:#f8fbfd;border:1px solid var(--line);border-radius:12px}.date-filter-panel.show{display:flex}.date-filter-panel input[type=date]{min-height:44px;width:100%}.date-filter-actions{display:flex;gap:6px}.filter-note{font-size:11px;color:var(--muted);margin-top:4px}.kpi.clickable{cursor:pointer;transition:.15s}.kpi.clickable:active{transform:scale(.98)}.kpi.kpi-active{outline:3px solid rgba(30,115,168,.22);box-shadow:0 0 0 2px rgba(30,115,168,.10)}.active-filter-note{font-size:12px;color:var(--muted);margin:6px 0 10px}.active-filter-note b{color:#1e73a8}
 @media(max-width:640px){.date-filter-panel{align-items:stretch}.date-filter-bar .date-field{min-width:100%;}.date-filter-actions{width:100%}.date-filter-actions button{flex:1}.date-filter-toggle{width:100%}}
+
+/* Executive Reports */
+.report-filter-card{margin-bottom:12px}.report-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.report-title h2{margin:0;color:#0b3650}.report-filters{display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:10px;align-items:end}.report-filters label{display:block;margin-bottom:5px}.quick-periods{display:flex;gap:6px;flex-wrap:wrap}.report-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.report-kpis .card{min-height:92px}.report-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.metric-value{font-size:25px;font-weight:800;color:#123f59;margin-top:8px}.metric-sub{font-size:11px;color:#6b7f8c;margin-top:4px}.perf-table{width:100%;border-collapse:collapse;font-size:12px}.perf-table th,.perf-table td{padding:9px 6px;border-bottom:1px solid #e6edf2;text-align:center;white-space:nowrap}.perf-table th{background:#f6f9fb;color:#31556b}.perf-table tr:hover td{background:#f9fcfd}.bar-row{display:grid;grid-template-columns:120px 1fr 58px;gap:8px;align-items:center;margin:11px 0;font-size:12px}.bar-track{height:10px;background:#edf2f5;border-radius:20px;overflow:hidden}.bar-fill{height:100%;background:#1d6b93;border-radius:20px}.bar-fill.warn{background:#c78b28}.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.aging-box{padding:14px 8px;border:1px solid #e1e9ee;border-radius:12px;text-align:center}.aging-box b{display:block;font-size:24px;margin-top:6px}.reason-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf1f4}.reason-row:last-child{border:0}.report-empty{padding:22px;text-align:center;color:#7a8d99}.table-wrap{overflow:auto}.report-details-table{min-width:850px;width:100%;border-collapse:collapse;font-size:12px}.report-details-table th,.report-details-table td{padding:9px;border-bottom:1px solid #e6edf2;text-align:right}.report-details-table th{background:#f6f9fb}.sla-good{color:#23845d;font-weight:700}.sla-bad{color:#c94a4a;font-weight:700}@media(max-width:900px){.report-filters{grid-template-columns:1fr 1fr}.report-kpis{grid-template-columns:1fr 1fr}.report-two{grid-template-columns:1fr}.aging-grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.report-filters{grid-template-columns:1fr}.report-kpis{grid-template-columns:1fr 1fr}.bar-row{grid-template-columns:90px 1fr 48px}}
 </style>
 </head>
 <body>
@@ -172,15 +175,29 @@ th{background:#f6f9fb}
   </section>
 
   <section id="reports" class="page">
-    <div id="reportKpis" class="grid"></div>
-    <div class="card" style="margin-top:12px">
-      <h3>أسباب عدم توفر العلاج <span class="en">Reasons for Treatment Unavailability</span></h3>
-      <div id="reasonReport"></div>
+    <div class="card report-filter-card">
+      <div class="report-title"><div><h2>التقارير وتحليل الأداء</h2><span class="en">Reports & Performance Analytics</span></div></div>
+      <div class="report-filters">
+        <div><label>من تاريخ <span class="en">From</span></label><input id="reportFrom" type="date" onchange="renderReports()"></div>
+        <div><label>إلى تاريخ <span class="en">To</span></label><input id="reportTo" type="date" onchange="renderReports()"></div>
+        <div><label>المسار <span class="en">Pathway</span></label><select id="reportPathway" onchange="renderReports()"></select></div>
+        <div class="quick-periods"><button class="smallbtn" onclick="setReportPeriod(0)">اليوم</button><button class="smallbtn" onclick="setReportPeriod(7)">7 أيام</button><button class="smallbtn" onclick="setReportPeriod(30)">30 يوم</button><button class="smallbtn" onclick="clearReportPeriod()">الكل</button></div>
+      </div>
     </div>
-    <div class="card" style="margin-top:12px">
-      <h3>أسباب الإلغاء <span class="en">Cancellation Reasons</span></h3>
-      <div id="cancelReport"></div>
+    <div id="reportKpis" class="report-kpis"></div>
+    <div class="report-two">
+      <div class="card"><h3>مقارنة أداء المسارات <span class="en">Pathway Performance Comparison</span></h3><div id="pathwayComparison"></div></div>
+      <div class="card"><h3>أعمار الطلبات المفتوحة <span class="en">Open Request Aging</span></h3><div id="agingReport"></div></div>
     </div>
+    <div class="report-two">
+      <div class="card"><h3>حجم الطلبات حسب المسار <span class="en">Volume by Pathway</span></h3><div id="volumeChart"></div></div>
+      <div class="card"><h3>متوسط زمن الاستجابة حسب المسار <span class="en">Avg Response Time by Pathway</span></h3><div id="responseChart"></div></div>
+    </div>
+    <div class="report-two">
+      <div class="card"><h3>أسباب عدم توفر العلاج <span class="en">Reasons for Treatment Unavailability</span></h3><div id="reasonReport"></div></div>
+      <div class="card"><h3>أسباب الإلغاء <span class="en">Cancellation Reasons</span></h3><div id="cancelReport"></div></div>
+    </div>
+    <div class="card" style="margin-top:12px"><h3>تفاصيل الحالات <span class="en">Case Details</span></h3><div id="reportDetails" class="table-wrap"></div></div>
   </section>
 
   <section id="users" class="page">
@@ -618,24 +635,51 @@ function saveReassign(id){
   const p=pathways().find(x=>x.name===np);if(!p?.leaderUserId){alert("لا يوجد قائد معيّن لهذا المسار.");return}
   const rs=requests(),r=rs.find(x=>x.id===id),old=r.pathway;r.pathway=np;r.leaderUserId=p.leaderUserId;r.createdAt=Date.now();r.audit.push([`إعادة توجيه من ${old} إلى ${np}: ${why}`,Date.now(),currentUser().name]);saveRequests(rs);closeModal();renderDashboard();
 }
+function reportFilteredRequests(){
+  let rs=scopedRequests();
+  const from=document.getElementById("reportFrom")?.value||"", to=document.getElementById("reportTo")?.value||"", pw=document.getElementById("reportPathway")?.value||"all";
+  if(from){const x=new Date(from+"T00:00:00").getTime();rs=rs.filter(r=>r.createdAt>=x)}
+  if(to){const x=new Date(to+"T23:59:59.999").getTime();rs=rs.filter(r=>r.createdAt<=x)}
+  if(pw!=="all")rs=rs.filter(r=>r.pathway===pw);
+  return rs;
+}
+function setReportPeriod(days){
+  const t=new Date(), f=new Date(); if(days>0)f.setDate(t.getDate()-(days-1));
+  $("reportFrom").value=localDateInputValue(f); $("reportTo").value=localDateInputValue(t); renderReports();
+}
+function clearReportPeriod(){$("reportFrom").value="";$("reportTo").value="";renderReports()}
+function median(nums){if(!nums.length)return 0;const a=[...nums].sort((x,y)=>x-y),m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2}
+function metricCard(ar,en,val,sub=""){return `<div class="card"><small>${ar}<span class="en">${en}</span></small><div class="metric-value">${val}</div>${sub?`<div class="metric-sub">${sub}</div>`:""}</div>`}
 function renderReports(){
-  const rs=scopedRequests();
-  const responded=rs.filter(r=>["available","unavailable"].includes(r.status));
-  const within=responded.filter(r=>(r.responseAt-r.createdAt)<=SLA_HOURS*3600000).length;
-  const avg=responded.length?responded.reduce((s,r)=>s+(r.responseAt-r.createdAt)/3600000,0)/responded.length:0;
-  const unavailable=rs.filter(r=>r.status==="unavailable").length,cancelled=rs.filter(r=>r.status==="cancelled").length;
-  const overdueOpen=rs.filter(r=>r.status==="pending"&&(Date.now()-r.createdAt)>SLA_HOURS*3600000).length;
+  const sel=$("reportPathway");
+  if(sel){const old=sel.value||"all";const opts=["<option value='all'>جميع المسارات | All Pathways</option>",...pathways().map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`)];sel.innerHTML=opts.join("");if([...sel.options].some(o=>o.value===old))sel.value=old;}
+  const rs=reportFilteredRequests(), now=Date.now();
+  const responded=rs.filter(r=>["available","unavailable"].includes(r.status)&&r.responseAt);
+  const responseHours=responded.map(r=>(r.responseAt-r.createdAt)/3600000).filter(x=>x>=0);
+  const within=responseHours.filter(x=>x<=SLA_HOURS).length, avg=responseHours.length?responseHours.reduce((a,b)=>a+b,0)/responseHours.length:0, med=median(responseHours);
+  const pending=rs.filter(r=>r.status==="pending"), overdue=pending.filter(r=>(now-r.createdAt)>SLA_HOURS*3600000);
+  const available=rs.filter(r=>r.status==="available").length, unavailable=rs.filter(r=>r.status==="unavailable").length, cancelled=rs.filter(r=>r.status==="cancelled").length;
+  const availabilityDen=available+unavailable, availabilityRate=availabilityDen?available/availabilityDen*100:0, sla=responded.length?within/responded.length*100:0;
   reportKpis.innerHTML=[
-    ["الرد خلال 24 ساعة","Within SLA",responded.length?Math.round(within/responded.length*100)+"%":"—","green"],
-    ["متوسط زمن الاستجابة","Avg Response",avg?avg.toFixed(1)+"h":"—","blue"],
-    ["غير متوفر","Not Available",unavailable,"red"],
-    ["متأخر ومفتوح","Open Overdue",overdueOpen,"amber"],
-    ["ملغاة","Cancelled",cancelled,""]
-  ].map(x=>`<div class="card kpi ${x[3]}"><small>${x[0]}<br>${x[1]}</small><b>${x[2]}</b></div>`).join("");
-  const rc={};rs.filter(r=>r.status==="unavailable").forEach(r=>rc[r.unavailabilityReason]=(rc[r.unavailabilityReason]||0)+1);
-  reasonReport.innerHTML=Object.keys(rc).length?Object.entries(rc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<p>${k} — <b>${v}</b></p>`).join(""):"لا توجد بيانات.";
-  const cc={};rs.filter(r=>r.status==="cancelled").forEach(r=>cc[r.cancelReason]=(cc[r.cancelReason]||0)+1);
-  cancelReport.innerHTML=Object.keys(cc).length?Object.entries(cc).map(([k,v])=>`<p>${k} — <b>${v}</b></p>`).join(""):"لا توجد بيانات.";
+    metricCard("إجمالي الطلبات","Total Requests",rs.length,"حجم العمل خلال الفترة المحددة"),
+    metricCard("تمت الإفادة","Responded",responded.length,rs.length?`${Math.round(responded.length/rs.length*100)}% من إجمالي الطلبات`:""),
+    metricCard("بانتظار الإفادة","Pending",pending.length,overdue.length?`${overdue.length} متجاوز 24 ساعة`:"لا توجد حالات متأخرة"),
+    metricCard("الالتزام خلال 24 ساعة","Within SLA",responded.length?sla.toFixed(1)+"%":"—",`${within} من ${responded.length} إفادة`),
+    metricCard("متوسط زمن الاستجابة","Avg Response",responseHours.length?avg.toFixed(1)+" ساعة":"—","من الإرسال حتى الإفادة الأولى"),
+    metricCard("وسيط زمن الاستجابة","Median Response",responseHours.length?med.toFixed(1)+" ساعة":"—","أقل تأثرًا بالحالات الشاذة"),
+    metricCard("نسبة توفر الخدمة","Service Availability",availabilityDen?availabilityRate.toFixed(1)+"%":"—",`${available} متوفر / ${unavailable} غير متوفر`),
+    metricCard("ملغاة","Cancelled",cancelled,rs.length?`${(cancelled/rs.length*100).toFixed(1)}% من الطلبات`:"")
+  ].join("");
+  const pnames=[...new Set(rs.map(r=>r.pathway).filter(Boolean))];
+  const stats=pnames.map(name=>{const a=rs.filter(r=>r.pathway===name),resp=a.filter(r=>["available","unavailable"].includes(r.status)&&r.responseAt),hrs=resp.map(r=>(r.responseAt-r.createdAt)/3600000),open=a.filter(r=>r.status==="pending"),late=open.filter(r=>(now-r.createdAt)>SLA_HOURS*3600000);return {name,total:a.length,responded:resp.length,open:open.length,late:late.length,sla:hrs.length?hrs.filter(h=>h<=SLA_HOURS).length/hrs.length*100:0,avg:hrs.length?hrs.reduce((x,y)=>x+y,0)/hrs.length:0,av:a.filter(r=>r.status==="available").length,un:a.filter(r=>r.status==="unavailable").length}}).sort((a,b)=>b.total-a.total);
+  $("pathwayComparison").innerHTML=stats.length?`<div class="table-wrap"><table class="perf-table"><thead><tr><th>المسار</th><th>الطلبات</th><th>تمت الإفادة</th><th>مفتوح</th><th>&gt;24س</th><th>SLA</th><th>متوسط الرد</th><th>متوفر</th><th>غير متوفر</th></tr></thead><tbody>${stats.map(x=>`<tr><td><b>${escapeHtml(x.name)}</b></td><td>${x.total}</td><td>${x.responded}</td><td>${x.open}</td><td>${x.late}</td><td class="${x.sla>=95?'sla-good':'sla-bad'}">${x.responded?x.sla.toFixed(1)+'%':'—'}</td><td>${x.responded?x.avg.toFixed(1)+'س':'—'}</td><td>${x.av}</td><td>${x.un}</td></tr>`).join("")}</tbody></table></div>`:'<div class="report-empty">لا توجد بيانات للفترة المحددة</div>';
+  const ages=[{l:"أقل من 8 ساعات",min:0,max:8},{l:"8–12 ساعة",min:8,max:12},{l:"12–24 ساعة",min:12,max:24},{l:"أكثر من 24 ساعة",min:24,max:Infinity}];
+  $("agingReport").innerHTML=`<div class="aging-grid">${ages.map(a=>{const n=pending.filter(r=>{const h=(now-r.createdAt)/3600000;return h>=a.min&&h<a.max}).length;return `<div class="aging-box"><small>${a.l}</small><b>${n}</b></div>`}).join("")}</div>`;
+  const maxVol=Math.max(1,...stats.map(x=>x.total));$("volumeChart").innerHTML=stats.length?stats.map(x=>`<div class="bar-row"><span>${escapeHtml(x.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${x.total/maxVol*100}%"></div></div><b>${x.total}</b></div>`).join(""):'<div class="report-empty">لا توجد بيانات</div>';
+  const maxResp=Math.max(1,...stats.map(x=>x.avg));$("responseChart").innerHTML=stats.length?stats.map(x=>`<div class="bar-row"><span>${escapeHtml(x.name)}</span><div class="bar-track"><div class="bar-fill ${x.avg>SLA_HOURS?'warn':''}" style="width:${x.avg/maxResp*100}%"></div></div><b>${x.responded?x.avg.toFixed(1)+'س':'—'}</b></div>`).join(""):'<div class="report-empty">لا توجد بيانات</div>';
+  const rc={};rs.filter(r=>r.status==="unavailable").forEach(r=>{const k=r.unavailabilityReason||"غير محدد";rc[k]=(rc[k]||0)+1});reasonReport.innerHTML=Object.keys(rc).length?Object.entries(rc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="reason-row"><span>${escapeHtml(k)}</span><b>${v} <small>(${unavailable?(v/unavailable*100).toFixed(0):0}%)</small></b></div>`).join(""):'<div class="report-empty">لا توجد بيانات.</div>';
+  const cc={};rs.filter(r=>r.status==="cancelled").forEach(r=>{const k=r.cancelReason||"غير محدد";cc[k]=(cc[k]||0)+1});cancelReport.innerHTML=Object.keys(cc).length?Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="reason-row"><span>${escapeHtml(k)}</span><b>${v}</b></div>`).join(""):'<div class="report-empty">لا توجد بيانات.</div>';
+  $("reportDetails").innerHTML=rs.length?`<table class="report-details-table"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>المسار</th><th>الحالة</th><th>زمن الاستجابة</th><th>النتيجة/السبب</th></tr></thead><tbody>${[...rs].sort((a,b)=>b.createdAt-a.createdAt).map(r=>{const st=statusInfo(r)[0],h=r.responseAt?((r.responseAt-r.createdAt)/3600000).toFixed(1)+" ساعة":elapsed(r),reason=r.status==="unavailable"?(r.unavailabilityReason||"—"):r.status==="available"?"متوفر":r.status==="cancelled"?(r.cancelReason||"ملغى"):"بانتظار الإفادة";return `<tr><td><b>${escapeHtml(r.id)}</b></td><td>${new Date(r.createdAt).toLocaleDateString('ar-SA')}</td><td>${escapeHtml(r.pathway||'—')}</td><td>${st}</td><td>${h}</td><td>${escapeHtml(reason)}</td></tr>`}).join("")}</tbody></table>`:'<div class="report-empty">لا توجد حالات مطابقة للفلاتر</div>';
 }
 function renderUsers(){
   const us=users();
@@ -686,21 +730,8 @@ function openAttachDB(){
   });
 }
 async function saveAttachment(file, requestId){
-  // Supabase Storage object paths should use a simple ASCII-safe name.
-  // Keep the user's original (including Arabic) filename only as display metadata.
-  const mimeExt={
-    "application/pdf":"pdf",
-    "image/jpeg":"jpg",
-    "image/jpg":"jpg",
-    "image/png":"png",
-    "image/webp":"webp",
-    "image/gif":"gif"
-  };
-  const originalExt=(file.name.split(".").pop()||"").toLowerCase();
-  const ext=/^[a-z0-9]{1,10}$/.test(originalExt) ? originalExt : (mimeExt[file.type]||"bin");
-  const safeRequestId=String(requestId||"request").replace(/[^A-Za-z0-9_-]/g,"_");
-  const uniqueName=`${Date.now()}_${Math.random().toString(36).slice(2,12)}.${ext}`;
-  const path=`${safeRequestId}/${uniqueName}`;
+  const safeName=file.name.replace(/[^\w.\-()\u0600-\u06FF]+/g,"_");
+  const path=`${requestId}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
   const {error}=await supabaseClient.storage.from("treatment-attachments").upload(
     path,file,{contentType:file.type||"application/octet-stream",upsert:false}
   );
