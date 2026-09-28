@@ -180,7 +180,14 @@ th{background:#f6f9fb}
       <div class="report-filters">
         <div><label>من تاريخ <span class="en">From</span></label><input id="reportFrom" type="date" onchange="renderReports()"></div>
         <div><label>إلى تاريخ <span class="en">To</span></label><input id="reportTo" type="date" onchange="renderReports()"></div>
-        <div><label>المسار <span class="en">Pathway</span></label><select id="reportPathway" onchange="renderReports()"></select></div>
+        <div><label>المسار <span class="en">Pathway</span></label><select id="reportPathway" onchange="renderReports()">
+<option value="all">جميع المسارات | All Pathways</option>
+<option value="القلب">القلب | Cardiology</option>
+<option value="العيون">العيون | Ophthalmology</option>
+<option value="العظام">العظام | Orthopedics</option>
+<option value="الباطنة">الباطنة | Internal Medicine</option>
+<option value="المناظير">المناظير | Endoscopy</option>
+</select></div>
         <div class="quick-periods"><button class="smallbtn" onclick="setReportPeriod(0)">اليوم</button><button class="smallbtn" onclick="setReportPeriod(7)">7 أيام</button><button class="smallbtn" onclick="setReportPeriod(30)">30 يوم</button><button class="smallbtn" onclick="clearReportPeriod()">الكل</button></div>
       </div>
     </div>
