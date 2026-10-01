@@ -139,6 +139,23 @@ input,select,textarea{min-height:46px;border:1px solid #cfdee2;border-radius:12p
 @media(max-width:1000px){.exec-kpis{grid-template-columns:repeat(2,1fr)}.exec-grid{grid-template-columns:1fr}.executive-hero{min-height:auto!important}.quick-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:620px){#dashboard{padding:0}.executive-hero{border-radius:20px!important;padding:24px 20px!important}.hero-title{font-size:34px}.hero-title .en{font-size:17px}.hero-copy{font-size:14px}.hero-actions{display:grid;grid-template-columns:1fr 1fr}.hero-actions button{min-width:0}.exec-kpis{grid-template-columns:1fr 1fr;gap:9px}.exec-kpi{padding:14px}.exec-kpi-value{font-size:28px}.quick-grid{grid-template-columns:1fr 1fr}.exec-card{padding:15px;border-radius:17px}}
 
+
+/* Status badges: consistent across reports, dashboard and request details. */
+.status-badges{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;vertical-align:middle}
+.status-badges .badge{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid transparent;border-radius:10px;font-size:12px;font-weight:700;line-height:1.5;white-space:nowrap}
+.status-badges .badge::before{content:"";width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:currentColor}
+.status-badges .b-pending{background:#fff3d6;color:#805000;border-color:#ffe3a0}
+.status-badges .b-available{background:#e4f5e9;color:#176337;border-color:#bfe6cb}
+.status-badges .b-unavailable{background:#fde9e9;color:#a12626;border-color:#f7cccc}
+.status-badges .b-cancelled{background:#edf0f3;color:#4e606c;border-color:#d7dfe5}
+.status-badges .b-overdue{background:#fff0f0;color:#b42323;border-color:#ffcaca}
+tr.request-overdue>td,.mobile-item.request-overdue,.leader-card.request-overdue{background:#fff7f7}
+.overdue-time{color:#b42323!important;font-weight:700}
+.request-time{display:inline-block;font-size:12px;white-space:nowrap}
+.report-details-table td{vertical-align:middle}
+.report-details-table .status-badges{min-width:185px}
+@media print{.status-badges .badge,tr.request-overdue>td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
 </style>
 </head>
 <body>
@@ -505,8 +522,17 @@ function statusInfo(r){
   if(r.status==="cancelled") return ["ملغى","b-cancelled"];
   if(r.status==="available") return ["تمت الإفادة - متوفر","b-available"];
   if(r.status==="unavailable") return ["تمت الإفادة - غير متوفر","b-unavailable"];
-  const hrs=(Date.now()-r.createdAt)/3600000;
-  return hrs>SLA_HOURS?["متأخر","b-overdue"]:["بانتظار الإفادة","b-pending"];
+  return ["بانتظار الإفادة","b-pending"];
+}
+function isRequestOverdue(r){
+  return r.status==="pending" && (Date.now()-r.createdAt)>SLA_HOURS*3600000;
+}
+function statusBadges(r){
+  const [label,style]=statusInfo(r);
+  return `<span class="status-badges"><span class="badge ${style}">${label}</span>${isRequestOverdue(r)?'<span class="badge b-overdue">متأخر</span>':''}</span>`;
+}
+function requestTimeHtml(r){
+  return `<span class="request-time${isRequestOverdue(r)?' overdue-time':''}">${elapsed(r)}</span>`;
 }
 function elapsed(r){
   const end=r.responseAt||Date.now(), h=(end-r.createdAt)/3600000;
@@ -578,11 +604,11 @@ function renderRequests(){
   rs.sort((a,b)=>b.createdAt-a.createdAt);
   requestRows.innerHTML=rs.map(r=>{
     const [s,c]=statusInfo(r);
-    return `<tr><td>${r.id}</td><td>${r.patientName}<span class="en">${r.patientId}</span></td><td>${r.pathway}</td><td><span class="badge ${c}">${s}</span></td><td>${elapsed(r)}</td><td><div class="row-actions"><button class="smallbtn" onclick="openRequest('${r.id}')">عرض</button>${r.status==="pending"?`<button class="smallbtn" onclick="reassign('${r.id}')">إعادة توجيه</button><button class="smallbtn" onclick="cancelReq('${r.id}')">إلغاء</button>`:""}</div></td></tr>`;
+    return `<tr class="${isRequestOverdue(r)?'request-overdue':''}"><td>${r.id}</td><td>${r.patientName}<span class="en">${r.patientId}</span></td><td>${r.pathway}</td><td>${statusBadges(r)}</td><td>${requestTimeHtml(r)}</td><td><div class="row-actions"><button class="smallbtn" onclick="openRequest('${r.id}')">عرض</button>${r.status==="pending"?`<button class="smallbtn" onclick="reassign('${r.id}')">إعادة توجيه</button><button class="smallbtn" onclick="cancelReq('${r.id}')">إلغاء</button>`:""}</div></td></tr>`;
   }).join("");
   mobileRequests.innerHTML=rs.map(r=>{
     const [s,c]=statusInfo(r);
-    return `<div class="mobile-item"><div class="request-head"><b>${r.id}</b><span class="badge ${c}">${s}</span></div><div>${r.patientName} · ${r.pathway}</div><div class="en">${r.patientId} · ${elapsed(r)}</div><div class="row-actions" style="margin-top:8px"><button class="smallbtn" onclick="openRequest('${r.id}')">عرض</button>${r.status==="pending"?`<button class="smallbtn" onclick="reassign('${r.id}')">إعادة توجيه</button><button class="smallbtn" onclick="cancelReq('${r.id}')">إلغاء</button>`:""}</div></div>`;
+    return `<div class="mobile-item ${isRequestOverdue(r)?'request-overdue':''}"><div class="request-head"><b>${r.id}</b>${statusBadges(r)}</div><div>${r.patientName} · ${r.pathway}</div><div class="en">${r.patientId} · ${requestTimeHtml(r)}</div><div class="row-actions" style="margin-top:8px"><button class="smallbtn" onclick="openRequest('${r.id}')">عرض</button>${r.status==="pending"?`<button class="smallbtn" onclick="reassign('${r.id}')">إعادة توجيه</button><button class="smallbtn" onclick="cancelReq('${r.id}')">إلغاء</button>`:""}</div></div>`;
   }).join("");
 }
 function nextId(){
@@ -637,8 +663,8 @@ function renderLeader(){
   if(!rs.length){leaderRequests.innerHTML=`<div class="card">لا توجد طلبات بانتظار الإفادة.<span class="en">No pending requests.</span></div>`;return}
   leaderRequests.innerHTML=rs.map(r=>{
     const [s,c]=statusInfo(r);
-    return `<div class="card leader-card">
-      <div class="request-head"><b>${r.id}</b><span class="badge ${c}">${s} · ${elapsed(r)}</span></div>
+    return `<div class="card leader-card ${isRequestOverdue(r)?'request-overdue':''}">
+      <div class="request-head"><b>${r.id}</b><span>${statusBadges(r)} ${requestTimeHtml(r)}</span></div>
       <div class="request-meta"><b>اسم المريض:</b> ${r.patientName}<br><b>رقم الهوية/السجل:</b> ${r.patientId}<br><b>المسار:</b> ${r.pathway}</div>
       <label>المرفقات <span class="en">Attachments</span></label>
       <div class="notice">${attachmentHtml(r.attachments)}</div>
@@ -699,14 +725,14 @@ function openRequest(id){
   const responseBlock = responded ? `
     <h4>إفادة قائد المسار <span class="en">Pathway Leader Response</span></h4>
     <div class="notice" style="line-height:1.9">
-      <b>القرار:</b> <span class="badge ${c}">${s}</span><br>
+      <b>القرار:</b> ${statusBadges(r)}<br>
       ${r.status==="unavailable" && r.unavailabilityReason ? `<b>سبب عدم التوفر:</b> ${r.unavailabilityReason}<br>` : ""}
       <b>ملاحظات قائد المسار / مكان العلاج:</b><br>
       <div style="margin-top:6px;padding:10px;border-radius:10px;background:#fff;font-weight:600">${r.responseNotes || "لا توجد ملاحظات"}</div>
       <div style="margin-top:8px"><b>تمت الإفادة بواسطة:</b> ${leaderName}</div>
       ${r.responseAt ? `<div><b>وقت الإفادة:</b> ${new Date(r.responseAt).toLocaleString("ar-SA")}</div>` : ""}
     </div>` : "";
-  modalBox.innerHTML=`<h3>${r.id}</h3><div class="request-meta"><b>المريض:</b> ${r.patientName}<br><b>الهوية/السجل:</b> ${r.patientId}<br><b>المسار:</b> ${r.pathway}<br><b>الحالة:</b> <span class="badge ${c}">${s}</span><br><b>الوقت:</b> ${elapsed(r)}</div>${responseBlock}<h4>المرفقات</h4><div class="notice">${attachmentHtml(r.attachments)}</div><h4>سجل العمليات <span class="en">Audit Trail</span></h4><div class="timeline">${r.audit.map(a=>`${new Date(a[1]).toLocaleString("ar-SA")} — ${a[0]} — ${a[2]}`).join("<br>")}</div><button class="secondary" style="width:100%;margin-top:12px" onclick="closeModal()">إغلاق</button>`;
+  modalBox.innerHTML=`<h3>${r.id}</h3><div class="request-meta"><b>المريض:</b> ${r.patientName}<br><b>الهوية/السجل:</b> ${r.patientId}<br><b>المسار:</b> ${r.pathway}<br><b>الحالة:</b> ${statusBadges(r)}<br><b>الوقت:</b> ${requestTimeHtml(r)}</div>${responseBlock}<h4>المرفقات</h4><div class="notice">${attachmentHtml(r.attachments)}</div><h4>سجل العمليات <span class="en">Audit Trail</span></h4><div class="timeline">${r.audit.map(a=>`${new Date(a[1]).toLocaleString("ar-SA")} — ${a[0]} — ${a[2]}`).join("<br>")}</div><button class="secondary" style="width:100%;margin-top:12px" onclick="closeModal()">إغلاق</button>`;
   openModal();
 }
 function cancelReq(id){
@@ -780,7 +806,7 @@ function renderReports(){
   const maxResp=Math.max(1,...stats.map(x=>x.avg));$("responseChart").innerHTML=stats.length?stats.map(x=>`<div class="bar-row"><span>${escapeHtml(x.name)}</span><div class="bar-track"><div class="bar-fill ${x.avg>SLA_HOURS?'warn':''}" style="width:${x.avg/maxResp*100}%"></div></div><b>${x.responded?x.avg.toFixed(1)+'س':'—'}</b></div>`).join(""):'<div class="report-empty">لا توجد بيانات</div>';
   const rc={};rs.filter(r=>r.status==="unavailable").forEach(r=>{const k=r.unavailabilityReason||"غير محدد";rc[k]=(rc[k]||0)+1});reasonReport.innerHTML=Object.keys(rc).length?Object.entries(rc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="reason-row"><span>${escapeHtml(k)}</span><b>${v} <small>(${unavailable?(v/unavailable*100).toFixed(0):0}%)</small></b></div>`).join(""):'<div class="report-empty">لا توجد بيانات.</div>';
   const cc={};rs.filter(r=>r.status==="cancelled").forEach(r=>{const k=r.cancelReason||"غير محدد";cc[k]=(cc[k]||0)+1});cancelReport.innerHTML=Object.keys(cc).length?Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="reason-row"><span>${escapeHtml(k)}</span><b>${v}</b></div>`).join(""):'<div class="report-empty">لا توجد بيانات.</div>';
-  $("reportDetails").innerHTML=rs.length?`<table class="report-details-table"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>المسار</th><th>الحالة</th><th>زمن الاستجابة</th><th>النتيجة/السبب</th></tr></thead><tbody>${[...rs].sort((a,b)=>b.createdAt-a.createdAt).map(r=>{const st=statusInfo(r)[0],h=r.responseAt?((r.responseAt-r.createdAt)/3600000).toFixed(1)+" ساعة":elapsed(r),reason=r.status==="unavailable"?(r.unavailabilityReason||"—"):r.status==="available"?"متوفر":r.status==="cancelled"?(r.cancelReason||"ملغى"):"بانتظار الإفادة";return `<tr><td><b>${escapeHtml(r.id)}</b></td><td>${new Date(r.createdAt).toLocaleDateString('ar-SA')}</td><td>${escapeHtml(r.pathway||'—')}</td><td>${st}</td><td>${h}</td><td>${escapeHtml(reason)}</td></tr>`}).join("")}</tbody></table>`:'<div class="report-empty">لا توجد حالات مطابقة للفلاتر</div>';
+  $("reportDetails").innerHTML=rs.length?`<table class="report-details-table"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>المسار</th><th>الحالة</th><th>زمن الاستجابة</th><th>النتيجة/السبب</th></tr></thead><tbody>${[...rs].sort((a,b)=>b.createdAt-a.createdAt).map(r=>{const st=statusInfo(r)[0],h=r.responseAt?((r.responseAt-r.createdAt)/3600000).toFixed(1)+" ساعة":elapsed(r),reason=r.status==="unavailable"?(r.unavailabilityReason||"—"):r.status==="available"?"متوفر":r.status==="cancelled"?(r.cancelReason||"ملغى"):"بانتظار الإفادة";return `<tr class="${isRequestOverdue(r)?'request-overdue':''}"><td><b>${escapeHtml(r.id)}</b></td><td>${new Date(r.createdAt).toLocaleDateString('ar-SA')}</td><td>${escapeHtml(r.pathway||'—')}</td><td>${statusBadges(r)}</td><td class="${isRequestOverdue(r)?'overdue-time':''}">${h}</td><td>${escapeHtml(reason)}</td></tr>`}).join("")}</tbody></table>`:'<div class="report-empty">لا توجد حالات مطابقة للفلاتر</div>';
 }
 function renderUsers(){
   const us=users();
