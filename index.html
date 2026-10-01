@@ -608,7 +608,7 @@ async function createRequest(){
   const savedFiles=[];
   for(const file of [...attachments.files]){
     try{ savedFiles.push(await saveAttachment(file,requestId)); }
-    catch(e){ console.error(e); alert("تعذر رفع الملف: "+file.name); return; }
+    catch(e){ console.error(e); alert("تعذر رفع الملف: "+file.name+"\nسبب الخطأ: "+(e.message||e.error||"تعذر الاتصال بالتخزين")+"\nلم يتم إرسال الطلب. يرجى إعادة المحاولة بعد معالجة السبب."); return; }
   }
   const {error:supabaseError}=await supabaseClient.from("treatment_requests").insert([{
     request_number:requestId,
@@ -831,7 +831,8 @@ function openAttachDB(){
   });
 }
 async function saveAttachment(file, requestId){
-  const safeName=file.name.replace(/[^\w.\-()\u0600-\u06FF]+/g,"_");
+  const extension=(file.name.split(".").pop()||"").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,16);
+  const safeName="attachment"+(extension?"."+extension:"");
   const path=`${requestId}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`;
   const {error}=await supabaseClient.storage.from("treatment-attachments").upload(
     path,file,{contentType:file.type||"application/octet-stream",upsert:false}
