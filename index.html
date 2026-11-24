@@ -153,6 +153,13 @@ input,select,textarea{min-height:46px;border:1px solid #cfdee2;border-radius:12p
 .exec-kpi.returned .exec-kpi-icon{background:#f5f1ff;color:#7754c8}.exec-kpi.cancelled .exec-kpi-icon{background:#edf1f2;color:#65757b}
 .not-mine-btn{border:1px dashed #b9a7ee!important;color:#5b3aa8!important;background:#faf8ff!important}
 button:disabled{opacity:.6;cursor:wait}
+.modal-box{position:relative}
+.modal-x{position:absolute;top:12px;left:12px;width:38px;height:38px;border-radius:50%;border:1px solid #d5e4e7;background:#fff;color:#35525e;font-size:18px;line-height:1;cursor:pointer;z-index:2}
+.modal-x:hover{background:#f1f6f8}
+.modal-box h3{padding-left:46px}
+.modal-actions{display:flex;gap:8px;margin-top:14px}.modal-actions button{flex:1;min-height:46px}
+.cf-hidden{display:none!important}
+.confirm-summary{line-height:2;font-size:14px}.confirm-summary b{color:#0b4967}
 tr.request-overdue>td,.mobile-item.request-overdue,.leader-card.request-overdue{background:#fff7f7}
 .overdue-time{color:#b42323!important;font-weight:700}
 .request-time{display:inline-block;font-size:12px;white-space:nowrap}
@@ -520,7 +527,7 @@ async function startApp(userId){
 })();
 
 function changeMyPasswordModal(forced){
-  modalBox.innerHTML=`<h3>${forced?"تغيير كلمة المرور المؤقتة":"تغيير كلمة المرور"}</h3>${forced?'<div class="notice">هذه أول مرة تدخل بكلمة مرور مؤقتة. اختر كلمة مرور خاصة بك للمتابعة.</div>':""}<label>كلمة المرور الجديدة *</label><input id="myPass1" type="password" autocomplete="new-password"><label>تأكيد كلمة المرور *</label><input id="myPass2" type="password" autocomplete="new-password"><div class="en">8 أحرف على الأقل</div><button class="primary" style="width:100%;margin-top:12px" onclick="saveMyPassword(${forced?"true":"false"})">حفظ كلمة المرور</button>${forced?"":'<button class="secondary" style="width:100%;margin-top:8px" onclick="closeModal()">إلغاء</button>'}`;
+  modalBox.innerHTML=`<h3>${forced?"تغيير كلمة المرور المؤقتة":"تغيير كلمة المرور"}</h3>${forced?'<div class="notice">هذه أول مرة تدخل بكلمة مرور مؤقتة. اختر كلمة مرور خاصة بك للمتابعة.</div>':""}<label>كلمة المرور الجديدة *</label><input id="myPass1" type="password" autocomplete="new-password"><label>تأكيد كلمة المرور *</label><input id="myPass2" type="password" autocomplete="new-password"><div class="en">8 أحرف على الأقل</div>${forced?'<button class="primary" style="width:100%;margin-top:12px" onclick="saveMyPassword(true)">حفظ كلمة المرور</button>':formActions("حفظ كلمة المرور","primary","saveMyPassword(false)")}`;
   modal.dataset.locked=forced?"1":"";
   openModal();
 }
@@ -684,6 +691,11 @@ async function createRequest(){
   if(submitting) return;
   if(!patientId.value.trim()||!patientName.value.trim()||!pathway.value){alert("أكمل رقم الهوية/السجل، اسم المريض، والمسار.");return}
   if(!pathwayLeader(pathway.value)){alert("لا يوجد قائد نشط لهذا المسار. فعّله أو أنشئ حسابه من صفحة المستخدمين.");return}
+  const files=[...attachments.files];
+  askConfirm(`<b>المريض:</b> ${escapeHtml(patientName.value.trim())}<br><b>رقم الهوية/السجل:</b> ${escapeHtml(patientId.value.trim())}<br><b>المسار:</b> ${escapeHtml(pathway.value)} — يُرسل إلى ${escapeHtml(pathwayLeader(pathway.value).name)}<br><b>المرفقات:</b> ${files.length?files.map(f=>escapeHtml(f.name)).join("، "):"لا يوجد"}<br><b>الملاحظات:</b> ${escapeHtml(notes.value.trim())||"—"}`,"تأكيد إرسال الطلب","primary",async()=>{ closeModal(); await sendNewRequest(); });
+}
+async function sendNewRequest(){
+  if(submitting) return;
   submitting=true;
   const btn=document.querySelector('#new button.primary'); if(btn){btn.disabled=true;btn.dataset.t=btn.textContent;btn.textContent="جارٍ الإرسال...";}
   try{
@@ -720,9 +732,9 @@ function renderLeader(){
 }
 function respond(id,type){
   if(type==="available"){
-    modalBox.innerHTML=`<h3>متوفر <span class="en">Available</span></h3><label>ملاحظات — اختياري<span class="en">Notes — Optional</span></label><textarea id="respNotes" placeholder="يمكن ذكر مكان تقديم الخدمة أو أي توجيه إضافي"></textarea><button class="success" style="width:100%;margin-top:12px" onclick="saveResponse('${escapeHtml(id)}','available')">إرسال الإفادة</button>`;
+    modalBox.innerHTML=`<h3>متوفر <span class="en">Available</span></h3><label>ملاحظات — اختياري<span class="en">Notes — Optional</span></label><textarea id="respNotes" placeholder="يمكن ذكر مكان تقديم الخدمة أو أي توجيه إضافي"></textarea>${formActions("اعتماد","success",`saveResponse('${escapeHtml(id)}','available')`)}`;
   }else{
-    modalBox.innerHTML=`<h3>غير متوفر <span class="en">Not Available</span></h3><label>سبب عدم التوفر *<span class="en">Reason — Required</span></label><select id="reasonSel" onchange="$('otherReason').classList.toggle('hidden',this.value!=='أخرى')"><option value="">اختر السبب</option>${reasons.map(x=>`<option>${x}</option>`).join("")}</select><div id="otherReason" class="hidden"><label>حدد السبب *</label><textarea id="otherReasonText"></textarea></div><label>ملاحظات إضافية — اختياري</label><textarea id="respNotes"></textarea><button class="danger" style="width:100%;margin-top:12px" onclick="saveResponse('${escapeHtml(id)}','unavailable')">إرسال الإفادة</button>`;
+    modalBox.innerHTML=`<h3>غير متوفر <span class="en">Not Available</span></h3><label>سبب عدم التوفر *<span class="en">Reason — Required</span></label><select id="reasonSel" onchange="$('otherReason').classList.toggle('hidden',this.value!=='أخرى')"><option value="">اختر السبب</option>${reasons.map(x=>`<option>${x}</option>`).join("")}</select><div id="otherReason" class="hidden"><label>حدد السبب *</label><textarea id="otherReasonText"></textarea></div><label>ملاحظات إضافية — اختياري</label><textarea id="respNotes"></textarea>${formActions("اعتماد","danger",`saveResponse('${escapeHtml(id)}','unavailable')`)}`;
   }
   openModal();
 }
@@ -745,16 +757,22 @@ async function saveResponse(id,type){
     }
   }
   const responseNotes=( $("respNotes") ? $("respNotes").value.trim() : "" );
-  if(await runAction("leader_respond",{p_req:id,p_status:type,p_notes:responseNotes||null,p_reason:reason||null},"تم إرسال الإفادة بنجاح")) renderLeader();
+  const summary=reqLine(id)+`<b>قرارك:</b> ${type==="available"?'<span style="color:#23845d">✓ متوفر</span>':'<span style="color:#b42323">✕ غير متوفر</span>'}<br>`+(reason?`<b>السبب:</b> ${escapeHtml(reason)}<br>`:"")+`<b>${type==="available"?"مكان العلاج / ملاحظات":"ملاحظات"}:</b> ${escapeHtml(responseNotes)||"—"}`;
+  askConfirm(summary,type==="available"?"تأكيد: متوفر":"تأكيد: غير متوفر",type==="available"?"success":"danger",async()=>{
+    if(await runAction("leader_respond",{p_req:id,p_status:type,p_notes:responseNotes||null,p_reason:reason||null},"تم إرسال الإفادة بنجاح")) renderLeader();
+  });
 }
 function returnRequestModal(id){
   const opts=STATE.pathways.filter(p=>p.active&&p.name!==currentUser().pathway).map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");
-  modalBox.innerHTML=`<h3>ليس من اختصاص المسار <span class="en">Not my specialty</span></h3><div class="notice">سيرجع الطلب للتنسيق الطبي ليحوّله للمسار الصحيح. لن يُحسب «غير متوفر».</div><label>المسار المقترح</label><select id="retPath"><option value="">لا أعرف / يحدده التنسيق</option>${opts}</select><label>السبب *</label><textarea id="retReason" placeholder="مثال: الحالة باطنية وليست قلبية"></textarea><button class="primary" style="width:100%;margin-top:12px" onclick="saveReturn('${escapeHtml(id)}')">إرجاع للتنسيق</button>`;
+  modalBox.innerHTML=`<h3>ليس من اختصاص المسار <span class="en">Not my specialty</span></h3><div class="notice">سيرجع الطلب للتنسيق الطبي ليحوّله للمسار الصحيح. لن يُحسب «غير متوفر».</div><label>المسار المقترح</label><select id="retPath"><option value="">لا أعرف / يحدده التنسيق</option>${opts}</select><label>السبب *</label><textarea id="retReason" placeholder="مثال: الحالة باطنية وليست قلبية"></textarea>${formActions("اعتماد","primary",`saveReturn('${escapeHtml(id)}')`)}`;
   openModal();
 }
 async function saveReturn(id){
   const why=$("retReason").value.trim(); if(!why){alert("سبب الإرجاع إجباري.");return}
-  if(await runAction("leader_return",{p_req:id,p_suggested:$("retPath").value||null,p_reason:why},"تم إرجاع الطلب للتنسيق الطبي")) renderLeader();
+  const sug=$("retPath").value||"";
+  askConfirm(reqLine(id)+`<b>قرارك:</b> ↺ ليس من اختصاص مساري — إرجاع للتنسيق الطبي<br><b>المسار المقترح:</b> ${escapeHtml(sug)||"يحدده التنسيق"}<br><b>السبب:</b> ${escapeHtml(why)}`,"تأكيد الإرجاع","primary",async()=>{
+    if(await runAction("leader_return",{p_req:id,p_suggested:sug||null,p_reason:why},"تم إرجاع الطلب للتنسيق الطبي")) renderLeader();
+  });
 }
 function openRequest(id){
   const r=requests().find(x=>x.id===id); if(!r) return;
@@ -775,12 +793,15 @@ function openRequest(id){
   openModal();
 }
 function cancelReq(id){
-  modalBox.innerHTML=`<h3>إلغاء الطلب</h3><label>سبب الإلغاء *</label><select id="cancelReason"><option value="">اختر السبب</option>${cancelReasons.map(x=>`<option>${x}</option>`).join("")}</select><label>تفاصيل إضافية عند الحاجة</label><textarea id="cancelText"></textarea><button class="danger" style="width:100%;margin-top:12px" onclick="saveCancel('${escapeHtml(id)}')">تأكيد الإلغاء</button>`;
+  modalBox.innerHTML=`<h3>إلغاء الطلب</h3><label>سبب الإلغاء *</label><select id="cancelReason"><option value="">اختر السبب</option>${cancelReasons.map(x=>`<option>${x}</option>`).join("")}</select><label>تفاصيل إضافية عند الحاجة</label><textarea id="cancelText"></textarea>${formActions("متابعة","danger",`saveCancel('${escapeHtml(id)}')`)}`;
   openModal();
 }
 async function saveCancel(id){
   const reason=$("cancelReason").value;if(!reason){alert("سبب الإلغاء إجباري.");return}
-  if(await runAction("coord_cancel",{p_req:id,p_reason:reason,p_notes:$("cancelText").value.trim()||null})) renderDashboard();
+  const det=$("cancelText").value.trim();
+  askConfirm(reqLine(id)+`<b>الإجراء:</b> <span style="color:#b42323">إلغاء الطلب</span><br><b>السبب:</b> ${escapeHtml(reason)}`+(det?`<br><b>تفاصيل:</b> ${escapeHtml(det)}`:""),"تأكيد الإلغاء","danger",async()=>{
+    if(await runAction("coord_cancel",{p_req:id,p_reason:reason,p_notes:det||null})) renderDashboard();
+  });
 }
 function reassign(id){
   const r=requests().find(x=>x.id===id); if(!r) return;
@@ -788,13 +809,16 @@ function reassign(id){
   const info=r.status==="unavailable"?`<div class="notice">رد مسار ${escapeHtml(r.pathway)}: غير متوفر (${escapeHtml(r.unavailabilityReason)}). سيُفتح الطلب ويُرسل للمسار الجديد، والرد السابق يبقى في سجل العمليات.</div>`:
     r.status==="returned"?`<div class="notice" style="background:#f5f1ff;border-color:#ddd2fb">قائد مسار ${escapeHtml(r.returnedFrom)}: ليس من اختصاصه — ${escapeHtml(r.returnedReason)}<br><b>المقترح:</b> ${escapeHtml(r.suggestedPathway||"—")}</div>`:"";
   const opts=STATE.pathways.filter(p=>p.active).map(p=>{const l=pathwayLeader(p.name);const same=p.name===r.pathway&&r.status!=="returned";return `<option value="${escapeHtml(p.name)}" ${(!l||same)?"disabled":""}>${escapeHtml(p.name)}${!l?" — لا يوجد قائد نشط":same?" — المسار الحالي":""}</option>`}).join("");
-  modalBox.innerHTML=`<h3>${title}</h3>${info}<label>المسار الجديد *</label><select id="newPath"><option value="">اختر المسار</option>${opts}</select><label>سبب إعادة التوجيه *</label><textarea id="reassignReason">${r.status==="returned"&&r.suggestedPathway?"حسب اقتراح قائد مسار "+escapeHtml(r.returnedFrom):""}</textarea><button class="primary" style="width:100%;margin-top:12px" onclick="saveReassign('${escapeHtml(id)}')">تأكيد</button>`;
+  modalBox.innerHTML=`<h3>${title}</h3>${info}<label>المسار الجديد *</label><select id="newPath"><option value="">اختر المسار</option>${opts}</select><label>سبب إعادة التوجيه *</label><textarea id="reassignReason">${r.status==="returned"&&r.suggestedPathway?"حسب اقتراح قائد مسار "+escapeHtml(r.returnedFrom):""}</textarea>${formActions("متابعة","primary",`saveReassign('${escapeHtml(id)}')`)}`;
   if(r.status==="returned"&&r.suggestedPathway&&pathwayLeader(r.suggestedPathway)) $("newPath").value=r.suggestedPathway;
   openModal();
 }
 async function saveReassign(id){
   const np=$("newPath").value,why=$("reassignReason").value.trim();if(!np||!why){alert("المسار الجديد وسبب إعادة التوجيه إجباريان.");return}
-  if(await runAction("coord_reassign",{p_req:id,p_new_pathway:np,p_reason:why},"تم توجيه الطلب إلى مسار "+np)) renderDashboard();
+  const r=requests().find(x=>x.id===id);
+  askConfirm(reqLine(id)+`<b>من مسار:</b> ${escapeHtml(r?.pathway||"—")}<br><b>إلى مسار:</b> ${escapeHtml(np)} — ${escapeHtml(pathwayLeader(np)?.name||"")}<br><b>السبب:</b> ${escapeHtml(why)}`,"تأكيد التحويل","primary",async()=>{
+    if(await runAction("coord_reassign",{p_req:id,p_new_pathway:np,p_reason:why},"تم توجيه الطلب إلى مسار "+np)) renderDashboard();
+  });
 }
 window.reportSelectedPathway="all";
 function selectReportPathway(pathway,btn){
@@ -899,7 +923,7 @@ async function adminCall(fn,args){
   await loadDirectory(); renderUsers(); renderPathways(); return true;
 }
 function addPathwayModal(){
-  modalBox.innerHTML=`<h3>إضافة مسار جديد</h3><label>اسم المسار *</label><input id="npName" placeholder="مثال: الباطنة"><h4 style="margin:14px 0 4px">حساب قائد المسار</h4><label>اسم القائد الحالي *</label><input id="npLeader"><label>اسم الدخول للمسار * <span class="en">حروف إنجليزية صغيرة وأرقام</span></label><input id="npUser" dir="ltr" autocapitalize="none" placeholder="internal"><button class="primary" style="width:100%;margin-top:12px" onclick="saveNewPathway()">إضافة المسار وإنشاء حسابه</button>`;
+  modalBox.innerHTML=`<h3>إضافة مسار جديد</h3><label>اسم المسار *</label><input id="npName" placeholder="مثال: الباطنة"><h4 style="margin:14px 0 4px">حساب قائد المسار</h4><label>اسم القائد الحالي *</label><input id="npLeader"><label>اسم الدخول للمسار * <span class="en">حروف إنجليزية صغيرة وأرقام</span></label><input id="npUser" dir="ltr" autocapitalize="none" placeholder="internal">${formActions("متابعة","primary","saveNewPathway()")}`;
   openModal();
 }
 async function saveNewPathway(){
@@ -907,40 +931,50 @@ async function saveNewPathway(){
   if(!name||!leader||!user){alert("أكمل جميع الحقول.");return}
   if(STATE.profiles.some(u=>u.username===user)){alert("اسم الدخول مستخدم مسبقًا.");return}
   if(!/^[a-z0-9._-]{3,40}$/.test(user)){alert("اسم الدخول: حروف إنجليزية صغيرة وأرقام فقط (3 أحرف على الأقل).");return}
-  if(!await adminCall("admin_add_pathway",{p_name:name})) return;
-  const pw=tempPassword();
-  if(!await adminCall("admin_create_account",{p_username:user,p_full_name:leader,p_role:"leader",p_pathway:name,p_password:pw})) return;
-  showCredentials("تمت إضافة مسار "+escapeHtml(name),user,pw);
+  if(STATE.pathways.some(p=>p.name===name)){alert("المسار موجود مسبقًا.");return}
+  askConfirm(`<b>مسار جديد:</b> ${escapeHtml(name)}<br><b>قائد المسار:</b> ${escapeHtml(leader)}<br><b>اسم الدخول:</b> <span dir="ltr">${escapeHtml(user)}</span>`,"تأكيد الإضافة","primary",async()=>{
+    if(!await adminCall("admin_add_pathway",{p_name:name})) return;
+    const pw=tempPassword();
+    if(!await adminCall("admin_create_account",{p_username:user,p_full_name:leader,p_role:"leader",p_pathway:name,p_password:pw})) return;
+    showCredentials("تمت إضافة مسار "+escapeHtml(name),user,pw);
+  });
 }
 function openUserModal(){
-  modalBox.innerHTML=`<h3>حساب تنسيق طبي جديد</h3><div class="notice">حسابات قادة المسارات تُدار من قسم «حسابات المسارات».</div><label>الاسم *</label><input id="uName"><label>اسم الدخول * <span class="en">حروف إنجليزية صغيرة وأرقام</span></label><input id="uUser" dir="ltr" autocapitalize="none"><button class="primary" style="width:100%;margin-top:12px" onclick="saveUser()">إنشاء الحساب</button>`;
+  modalBox.innerHTML=`<h3>حساب تنسيق طبي جديد</h3><div class="notice">حسابات قادة المسارات تُدار من قسم «حسابات المسارات».</div><label>الاسم *</label><input id="uName"><label>اسم الدخول * <span class="en">حروف إنجليزية صغيرة وأرقام</span></label><input id="uUser" dir="ltr" autocapitalize="none">${formActions("متابعة","primary","saveUser()")}`;
   openModal();
 }
 async function saveUser(){
   const name=$("uName").value.trim(), username=$("uUser").value.trim().toLowerCase();
   if(!name||!username){alert("أكمل البيانات.");return}
-  const pw=tempPassword();
-  if(await adminCall("admin_create_account",{p_username:username,p_full_name:name,p_role:"coordination",p_pathway:null,p_password:pw})) showCredentials("تم إنشاء الحساب",username,pw);
+  askConfirm(`<b>حساب تنسيق طبي جديد:</b> ${escapeHtml(name)}<br><b>اسم الدخول:</b> <span dir="ltr">${escapeHtml(username)}</span>`,"تأكيد الإنشاء","primary",async()=>{
+    const pw=tempPassword();
+    if(await adminCall("admin_create_account",{p_username:username,p_full_name:name,p_role:"coordination",p_pathway:null,p_password:pw})) showCredentials("تم إنشاء الحساب",username,pw);
+  });
 }
 function pathwayAccountModal(pathName){
-  modalBox.innerHTML=`<h3>إنشاء حساب مسار ${escapeHtml(pathName)}</h3><label>اسم قائد المسار الحالي *</label><input id="paName"><label>اسم الدخول للمسار * <span class="en">حروف إنجليزية صغيرة وأرقام</span></label><input id="paUser" dir="ltr" autocapitalize="none" placeholder="eye"><button class="primary" style="width:100%;margin-top:12px" data-path="${escapeHtml(pathName)}" onclick="savePathwayAccount(this.dataset.path)">إنشاء</button>`;
+  modalBox.innerHTML=`<h3>إنشاء حساب مسار ${escapeHtml(pathName)}</h3><label>اسم قائد المسار الحالي *</label><input id="paName"><label>اسم الدخول للمسار * <span class="en">حروف إنجليزية صغيرة وأرقام</span></label><input id="paUser" dir="ltr" autocapitalize="none" placeholder="eye"><input type="hidden" id="paPath" value="${escapeHtml(pathName)}">${formActions("متابعة","primary","savePathwayAccount($('paPath').value)")}`;
   openModal();
 }
 async function savePathwayAccount(pathName){
   const name=$("paName").value.trim(), username=$("paUser").value.trim().toLowerCase();
   if(!name||!username){alert("أكمل البيانات.");return}
-  const pw=tempPassword();
-  if(await adminCall("admin_create_account",{p_username:username,p_full_name:name,p_role:"leader",p_pathway:pathName,p_password:pw})) showCredentials("تم إنشاء حساب مسار "+escapeHtml(pathName),username,pw);
+  askConfirm(`<b>حساب مسار:</b> ${escapeHtml(pathName)}<br><b>قائد المسار:</b> ${escapeHtml(name)}<br><b>اسم الدخول:</b> <span dir="ltr">${escapeHtml(username)}</span>`,"تأكيد الإنشاء","primary",async()=>{
+    const pw=tempPassword();
+    if(await adminCall("admin_create_account",{p_username:username,p_full_name:name,p_role:"leader",p_pathway:pathName,p_password:pw})) showCredentials("تم إنشاء حساب مسار "+escapeHtml(pathName),username,pw);
+  });
 }
 function changeLeaderModal(id){
   const u=users().find(x=>x.id===id); if(!u)return;
-  modalBox.innerHTML=`<h3>تغيير قائد مسار ${escapeHtml(u.pathway)}</h3><div class="notice">القائد الحالي: <b>${escapeHtml(u.name)}</b><br>يبقى حساب المسار نفسه (${escapeHtml(u.username)}) وكل طلباته. تُنشأ كلمة مرور مؤقتة جديدة ويُخرج القائد السابق من كل الأجهزة.</div><label>اسم القائد الجديد *</label><input id="clName"><button class="primary" style="width:100%;margin-top:12px" data-id="${u.id}" onclick="saveChangeLeader(this.dataset.id)">حفظ التغيير</button>`;
+  modalBox.innerHTML=`<h3>تغيير قائد مسار ${escapeHtml(u.pathway)}</h3><div class="notice">القائد الحالي: <b>${escapeHtml(u.name)}</b><br>يبقى حساب المسار نفسه (${escapeHtml(u.username)}) وكل طلباته. تُنشأ كلمة مرور مؤقتة جديدة ويُخرج القائد السابق من كل الأجهزة.</div><label>اسم القائد الجديد *</label><input id="clName"><input type="hidden" id="clId" value="${u.id}">${formActions("متابعة","primary","saveChangeLeader($('clId').value)")}`;
   openModal();
 }
 async function saveChangeLeader(id){
   const name=$("clName").value.trim(); if(!name){alert("اسم القائد الجديد إجباري.");return}
-  const u=users().find(x=>x.id===id); const pw=tempPassword();
-  if(await adminCall("admin_change_leader",{p_id:id,p_full_name:name,p_password:pw})) showCredentials(`تم تغيير قائد مسار ${escapeHtml(u.pathway)} إلى ${escapeHtml(name)}`,u.username,pw);
+  const u=users().find(x=>x.id===id);
+  askConfirm(`<b>مسار:</b> ${escapeHtml(u.pathway)}<br><b>من:</b> ${escapeHtml(u.name)}<br><b>إلى:</b> ${escapeHtml(name)}<br><span style="color:#b42323">سيُخرج القائد السابق من كل الأجهزة.</span>`,"تأكيد تغيير القائد","primary",async()=>{
+    const pw=tempPassword();
+    if(await adminCall("admin_change_leader",{p_id:id,p_full_name:name,p_password:pw})) showCredentials(`تم تغيير قائد مسار ${escapeHtml(u.pathway)} إلى ${escapeHtml(name)}`,u.username,pw);
+  });
 }
 async function resetPassword(id){
   const u=users().find(x=>x.id===id); if(!u) return;
@@ -957,8 +991,32 @@ async function toggleUser(id){
   }
   await adminCall("admin_set_active",{p_id:id,p_active:!u.active});
 }
-function openModal(){modal.classList.remove("hidden")}
+function openModal(){
+  if(modal.dataset.locked!=="1" && !modalBox.querySelector(":scope > .modal-x")) modalBox.insertAdjacentHTML("afterbegin",'<button type="button" class="modal-x" aria-label="إغلاق" title="إغلاق" onclick="closeModal()">✕</button>');
+  modal.classList.remove("hidden");
+}
 function closeModal(){ if(modal.dataset.locked==="1") return; modal.classList.add("hidden") }
+function formActions(label,cls,onclick){
+  return `<div class="modal-actions"><button type="button" class="${cls}" onclick="${onclick}">${label}</button><button type="button" class="secondary" onclick="closeModal()">↩ تراجع</button></div>`;
+}
+/* Second step: show a summary and ask for confirmation. "رجوع للتعديل" restores the form as it was. */
+function askConfirm(summaryHtml,yesLabel,yesClass,fn){
+  const standalone=modal.classList.contains("hidden");
+  if(standalone) modalBox.innerHTML="";
+  const hidden=[...modalBox.children].filter(k=>!k.classList.contains("modal-x"));
+  hidden.forEach(k=>k.classList.add("cf-hidden"));
+  const box=document.createElement("div"); box.className="confirm-step";
+  box.innerHTML=`<h3>تأكيد قبل الإرسال <span class="en">Please confirm</span></h3><div class="notice confirm-summary">${summaryHtml}</div><div class="modal-actions"><button type="button" class="${yesClass}" data-cf="yes">✓ ${yesLabel}</button><button type="button" class="secondary" data-cf="back">↩ رجوع للتعديل</button></div>`;
+  modalBox.appendChild(box);
+  if(standalone) openModal();
+  box.querySelector('[data-cf="back"]').onclick=()=>{ box.remove(); hidden.forEach(k=>k.classList.remove("cf-hidden")); if(standalone) closeModal(); };
+  const yes=box.querySelector('[data-cf="yes"]');
+  yes.onclick=async()=>{ if(yes.disabled) return; yes.disabled=true; yes.textContent="جارٍ الإرسال...";
+    try{ await fn(); } finally{ if(document.body.contains(yes)){ yes.disabled=false; yes.textContent="✓ "+yesLabel; } } };
+}
+function reqLine(id){ const r=requests().find(x=>x.id===id); return `<b>الطلب:</b> ${escapeHtml(id)}${r?` — ${escapeHtml(r.patientName)}`:""}<br>`; }
+modal.addEventListener("click",e=>{ if(e.target===modal) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !modal.classList.contains("hidden")) closeModal(); });
 
 /* ===== Attachments: private bucket, short-lived signed links ===== */
 async function saveAttachment(file){
